@@ -111,9 +111,9 @@ class AutoTrader:
 
         current_coin = self.db.get_current_coin()
         # Display on the console, the current coin+Bridge, so users can see *some* activity and not thinkg the bot has stopped. Not logging though to reduce log size.
-        print(str(
-            datetime.now()) + " - CONSOLE - INFO - I am scouting the best trades. Current coin: {0} ".format(
-            current_coin + self.config.BRIDGE), end='\r')
+        #print(str(
+        #    datetime.now()) + " - CONSOLE - INFO - I am scouting the best trades. Current coin: {0} ".format(
+        #    current_coin + self.config.BRIDGE), end='\r')
 
         current_coin_price = get_market_ticker_price_from_list(all_tickers, current_coin + self.config.BRIDGE)
 
@@ -139,6 +139,14 @@ class AutoTrader:
 
             # save ratio so we can pick the best option, not necessarily the first
             ratio_dict[pair] = (coin_opt_coin_ratio - self.config.SCOUT_TRANSACTION_FEE * self.config.SCOUT_MULTIPLIER * coin_opt_coin_ratio) - pair.ratio
+
+        #  mb: improved log
+        best_option = max(ratio_dict, key=ratio_dict.get)
+        rc = (ratio_dict[best_option] + best_option.ratio) / (1-self.config.SCOUT_TRANSACTION_FEE * self.config.SCOUT_MULTIPLIER)
+        o = current_coin_price/rc
+        target_price_cur = (o*best_option .ratio)/(1-self.config.SCOUT_TRANSACTION_FEE * self.config.SCOUT_MULTIPLIER)
+        target_price_opt = current_coin_price*(1-self.config.SCOUT_TRANSACTION_FEE * self.config.SCOUT_MULTIPLIER) / best_option.ratio
+        print(f'{str(datetime.now())} - SCOUTING - Current coin: {current_coin + self.config.BRIDGE}, Best Option: {best_option.to_coin}, Current/Target Ratio: {rc/best_option.ratio:.6f}, Target Price {best_option.to_coin}: {target_price_opt:.6f} (cur: {o:.6f}), Target Price {best_option.from_coin}: {target_price_cur:.6f} (cur: {current_coin_price:.6f})', end='\r')
 
         # keep only ratios bigger than zero
         ratio_dict = {k: v for k, v in ratio_dict.items() if v > 0}
